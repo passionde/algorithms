@@ -1,0 +1,158 @@
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+var count1 = 0
+var count2 = 0
+
+func stringEncoding(count int, str string) []encodedStr {
+	encode := make([]encodedStr, 0, count)
+
+	bLet := int32(str[0])
+	var let int32
+	quantity := 0
+
+	for _, let = range str {
+		count1++ //todo
+		if let == bLet {
+			quantity++
+			continue
+		}
+
+		encode = append(encode, encodedStr{
+			letter:   bLet,
+			quantity: quantity,
+		})
+
+		bLet = let
+		quantity = 1
+	}
+
+	encode = append(encode, encodedStr{
+		letter:   let,
+		quantity: quantity,
+	})
+	count1++ //todo
+
+	return encode
+}
+
+func searchLenMinSubstr2(encode []encodedStr) int {
+	if len(encode) < 4 {
+		return -1
+	}
+
+	minLen := -1
+
+	for idx := 0; idx < len(encode)-3; idx++ {
+		encB := encode[idx]
+
+		mem := map[int32]interface{}{encB.letter: nil}
+		curLen := 2
+
+		for _, encA := range encode[idx+1:] {
+			count1++ //todo
+			mem[encA.letter] = nil
+			if len(mem) != 4 {
+				curLen += encA.quantity
+			}
+
+			if curLen >= minLen && minLen != -1 && curLen > 4 {
+				continue
+			}
+
+			if len(mem) == 4 {
+				if minLen == -1 || minLen > curLen {
+					minLen = curLen
+				}
+				if minLen == 4 {
+					return 4
+				}
+				break
+			}
+
+			if encA.letter == encB.letter {
+				idx++
+				encB = encode[idx]
+				curLen -= encB.quantity
+			}
+		}
+	}
+	return minLen
+}
+
+func searchLenMinSubst(str string, countLet int) int {
+	countLet = len(str) // todo
+	min := -1
+
+	for i := 0; i < countLet-1; i++ {
+		cache := map[uint8]interface{}{str[i]: nil}
+
+		for j := i + 1; j < countLet; j++ {
+			count2++ //todo
+			cache[str[j]] = nil
+			presentValue := j - i + 1
+
+			if presentValue >= min && min != -1 {
+				continue
+			}
+
+			if len(cache) == 4 {
+				if presentValue == 4 {
+					return 4
+				}
+				min = presentValue
+				break
+			}
+
+			if str[i] == str[j] {
+				i++
+			}
+		}
+	}
+	return min
+}
+
+func main() {
+	//in := bufio.NewReader(os.Stdin)
+
+	var count int
+	var str string
+
+	//fmt.Fscan(in, &count)
+	//fmt.Fscan(in, &str)
+
+	f, err := os.Open("Task3/file.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	fContent, err := ioutil.ReadFile("Task3/file.txt")
+	if err != nil {
+		panic(err)
+	}
+	str = string(fContent)
+	encode := stringEncoding(count, str)
+	minLenSubstr := searchLenMinSubstr2(encode)
+	minLenSubstr2 := searchLenMinSubst(str, count)
+
+	fmt.Println("Количество символов:", len(str))
+	fmt.Println("Количество операций 1 функции:", count1)
+	fmt.Println("Количество операций 2 функции:", count2)
+	fmt.Println(minLenSubstr, minLenSubstr2 == minLenSubstr)
+}
+
+type encodedStr struct {
+	letter   int32
+	quantity int
+}
+
+// 12 aabbccddbadd
+// 16 aaaabbbbccccdddd
+// 7 dbbccca
+// 7 abcabac
